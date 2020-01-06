@@ -22,10 +22,6 @@ const levelTwoRoutes = [
     component: VitalsLevelTwo
   },
   {
-    url: "/patient/:patientUuid/chart/programs",
-    component: ProgramsLevelTwo
-  },
-  {
     url: "/patient/:patientUuid/chart/medications",
     component: MedicationsDetailedSummary
   },
