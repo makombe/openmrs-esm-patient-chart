@@ -73,7 +73,7 @@ export default function PatientChartSummary(props: PatientChartSummaryProps) {
       });
       setWidgets(widgets);
     });
-  }, []);
+  }, [config]);
 
   return (
     <main className="omrs-main-content">

@@ -43,7 +43,7 @@ function Root(props) {
       });
       setWidgetRoutes(widgetRoutes);
     });
-  }, []);
+  }, [config]);
 
   return (
     <BrowserRouter basename={window["getOpenmrsSpaBase"]()}>
