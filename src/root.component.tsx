@@ -21,7 +21,6 @@ function Root(props) {
   React.useEffect(() => {
     const modulePromises = [];
 
-    const widgets = [];
     config.map(c => {
       if (c["esModule"]) {
         modulePromises.push(System.import(c.esModule));
@@ -43,7 +42,7 @@ function Root(props) {
       });
       setWidgetRoutes(widgetRoutes);
     });
-  }, [config]);
+  }, []);
 
   return (
     <BrowserRouter basename={window["getOpenmrsSpaBase"]()}>
