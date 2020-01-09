@@ -3,19 +3,20 @@ import { BrowserRouter, Route } from "react-router-dom";
 import openmrsRootDecorator from "@openmrs/react-root-decorator";
 import PatientChartSummary from "./summary/patient-chart-summary.component";
 import PatientBanner from "./summary/banner/patient-banner.component";
-import { LevelTwoRoutes } from "./summary/level-two-routes.component";
+import LevelTwoRoutes from "./summary/level-two-routes.component";
 
 function Root(props) {
   const [widgetRoutes, setWidgetRoutes] = React.useState([]);
 
-  const config = [
-    { name: "medications" },
+  const exampleConfig = [
     {
       name: "Programs",
       esModule: "@jj-widgets",
       exportName: "programsWidget"
     }
   ];
+
+  const config = [];
 
   React.useEffect(() => {
     const modulePromises = [];

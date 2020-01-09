@@ -10,14 +10,23 @@ import ProgramsCard from "./history/programs/programs-card.component";
 import MedicationsSummary from "./history/medications/medications-summary.component";
 
 export default function PatientChartSummary(props: PatientChartSummaryProps) {
-  const config = [
+  const exampleConfig = [
     { name: "conditions" },
     {
       name: "Programs",
       esModule: "@jj-widgets",
-      exportName: "programsWidget",
-      isParcel: true
+      exportName: "programsWidget"
     },
+    { name: "medications" },
+    { name: "allergies" },
+    { name: "notes" },
+    { name: "vitals" },
+    { name: "heightAndWeight" }
+  ];
+
+  const config: configType[] = [
+    { name: "conditions" },
+    { name: "programs" },
     { name: "medications" },
     { name: "allergies" },
     { name: "notes" },
@@ -58,7 +67,7 @@ export default function PatientChartSummary(props: PatientChartSummaryProps) {
       });
 
       config.map(c => {
-        c["esModule"]
+        c.hasOwnProperty("esModule")
           ? widgets.push(moduleWidgets[c.exportName].root)
           : widgets.push(coreComponents[c.name]);
       });
@@ -81,3 +90,9 @@ export default function PatientChartSummary(props: PatientChartSummaryProps) {
 }
 
 type PatientChartSummaryProps = RouteComponentProps & {};
+
+type configType = {
+  name: string;
+  exportName?: string;
+  esModule?: string;
+};
