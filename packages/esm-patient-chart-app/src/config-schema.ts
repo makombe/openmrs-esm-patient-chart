@@ -94,6 +94,11 @@ export const esmPatientChartSchema = {
     _description: 'The UUID of the visit attribute that contains the visit queue number.',
     _default: 'c61ce16f-272a-41e7-9924-4c555d0932c5',
   },
+  showUpcomingAppointments: {
+    _type: Type.Boolean,
+    _description: 'Whether start visit form should display upcoming appointments',
+    _default: false,
+  },
 };
 
 export interface ChartConfig {
@@ -107,6 +112,7 @@ export interface ChartConfig {
   }>;
   showServiceQueueFields: boolean;
   visitQueueNumberAttributeUuid: string;
+  showUpcomingAppointments: boolean;
 }
 
 export const configSchema = {
