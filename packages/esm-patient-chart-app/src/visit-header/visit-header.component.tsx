@@ -14,12 +14,11 @@ import {
   interpolateUrl,
 } from '@openmrs/esm-framework';
 import { launchPatientWorkspace, useSystemVisitSetting } from '@openmrs/esm-patient-common-lib';
-import { type MappedQueuePriority, useVisitQueueEntry } from '../visit/queue-entry/queue.resource';
 import { CloseButton } from './close-button.component';
-import { EditQueueEntry } from '../visit/queue-entry/edit-queue-entry.component';
 import RetrospectiveVisitLabel from './retrospective-visit-label.component';
 import VisitHeaderSideMenu from './visit-header-side-menu.component';
 import styles from './visit-header.scss';
+import { type ChartConfig } from '../config-schema';
 
 interface PatientInfoProps {
   patient: fhir.Patient;
@@ -28,7 +27,7 @@ interface PatientInfoProps {
 const PatientInfo: React.FC<PatientInfoProps> = ({ patient }) => {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
-
+  const config = useConfig<ChartConfig>();
   // Render translated gender
   const getGender = useCallback(
     (gender) => {
@@ -49,32 +48,7 @@ const PatientInfo: React.FC<PatientInfoProps> = ({ patient }) => {
   );
 
   const name = `${patient?.name?.[0].given?.join(' ')} ${patient?.name?.[0].family}`;
-  const patientUuid = `${patient?.id}`;
-  const { currentVisit } = useVisit(patientUuid);
   const patientNameIsTooLong = !isTablet && name.trim().length > 25;
-  const { queueEntry } = useVisitQueueEntry(patientUuid, currentVisit?.uuid);
-
-  const visitType = queueEntry?.visitType ?? '';
-  const priority = queueEntry?.priority ?? '';
-
-  const getServiceString = useCallback(() => {
-    if (queueEntry?.status && queueEntry.service) {
-      return `${t(queueEntry.status)} - ${t(queueEntry.service)}`;
-    } else {
-      return '';
-    }
-  }, [queueEntry]);
-
-  const getTagType = (priority: string) => {
-    switch (priority as MappedQueuePriority) {
-      case 'emergency':
-        return 'red';
-      case 'not urgent':
-        return 'green';
-      default:
-        return 'gray';
-    }
-  };
 
   return (
     <>
@@ -97,21 +71,7 @@ const PatientInfo: React.FC<PatientInfoProps> = ({ patient }) => {
         <span className={styles.patientName}>{name} </span>
       )}
       <span className={styles.patientInfo}>{`${age(patient?.birthDate)}, ${getGender(patient?.gender)}`}</span>
-      {queueEntry && (
-        <>
-          <div className={styles.navDivider} />
-          <span className={styles.patientInfo}>{getServiceString()}</span>
-          <div className={styles.navDivider} />
-          <span className={styles.patientInfo}>{visitType}</span>
-          <Tag
-            className={priority === 'Priority' ? styles.priorityTag : styles.tag}
-            type={getTagType(priority?.toLocaleLowerCase('en'))}
-          >
-            {priority}
-          </Tag>
-          <EditQueueEntry queueEntry={queueEntry} />{' '}
-        </>
-      )}
+      {config.showServiceQueueFields && <ExtensionSlot name="visit-header-slot" state={{ patient }} />}
     </>
   );
 };
