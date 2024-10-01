@@ -68,7 +68,8 @@ const FilterNodeParent = ({ root, itemNumber }: filterNodeParentProps) => {
   const tablet = useLayoutType() === 'tablet';
   const [expandAll, setExpandAll] = useState<boolean | undefined>(undefined);
 
-  if (!root.subSets) return;
+  // Filter out root nodes without data
+  if (!root.subSets || !root.subSets.some((node) => node.hasData || node.subSets)) return null;
 
   const filterParent = root.subSets.map((node, key) => {
     return (
@@ -106,6 +107,11 @@ const FilterNode = ({ root, level, open }: FilterNodeProps) => {
   const indeterminate = isIndeterminate(parents[root.flatName], checkboxes);
   const allChildrenChecked = parents[root.flatName]?.every((kid) => checkboxes[kid]);
 
+  // Filter out nodes that don't have data or don't have children with data
+  if (!root.hasData && (!root.subSets || !root.subSets.some((subNode) => subNode.hasData || subNode.subSets))) {
+    return null;
+  }
+
   return (
     <Accordion align="start" size={tablet ? 'md' : 'sm'}>
       <AccordionItem
@@ -132,6 +138,10 @@ const FilterNode = ({ root, level, open }: FilterNodeProps) => {
 
 const FilterLeaf = ({ leaf }: FilterLeafProps) => {
   const { checkboxes, toggleVal } = useContext(FilterContext);
+
+  // Filter out leaves without data
+  if (!leaf.hasData) return null;
+
   return (
     <div className={styles.filterItem}>
       <Checkbox
@@ -139,7 +149,6 @@ const FilterLeaf = ({ leaf }: FilterLeafProps) => {
         labelText={leaf?.display}
         checked={checkboxes?.[leaf.flatName]}
         onChange={() => toggleVal(leaf.flatName)}
-        disabled={!leaf.hasData}
       />
     </div>
   );
