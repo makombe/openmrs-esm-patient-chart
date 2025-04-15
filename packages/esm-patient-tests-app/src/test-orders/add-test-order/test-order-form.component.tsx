@@ -24,6 +24,7 @@ import {
   priorityOptions,
   useOrderBasket,
   useOrderType,
+  useVisitOrOfflineVisit,
 } from '@openmrs/esm-patient-common-lib';
 import {
   ExtensionSlot,
@@ -53,6 +54,7 @@ export function LabOrderForm({
   closeWorkspace,
   closeWorkspaceWithSavedChanges,
   promptBeforeClosing,
+  patientUuid,
   orderTypeUuid,
   orderableConceptSets,
 }: LabOrderFormProps) {
@@ -64,13 +66,11 @@ export function LabOrderForm({
   const [showErrorNotification, setShowErrorNotification] = useState(false);
   const config = useConfig<ConfigObject>();
   const { orderType, isLoadingOrderType } = useOrderType(orderTypeUuid);
-
-  const orderReasonRequired = useMemo(
-    () =>
-      (config.labTestsWithOrderReasons?.find((c) => c.labTestUuid === initialOrder?.testType?.conceptUuid) || {})
-        .required,
-    [config.labTestsWithOrderReasons, initialOrder?.testType?.conceptUuid],
-  );
+  const { currentVisit } = useVisitOrOfflineVisit(patientUuid);
+  const visitStartDate = currentVisit?.startDatetime;
+  const orderReasonRequired = (
+    config.labTestsWithOrderReasons?.find((c) => c.labTestUuid === initialOrder?.testType?.conceptUuid) || {}
+  ).required;
 
   const labOrderFormSchema = useMemo(
     () =>
@@ -143,7 +143,8 @@ export function LabOrderForm({
         ...data,
       };
       finalizedOrder.orderer = session.currentProvider.uuid;
-
+      //Setting dateActivated ensures that the order date is accurately captured, which is essential for RDE
+      finalizedOrder.dateActivated = visitStartDate;
       const newOrders = [...orders];
       const existingOrder = orders.find((order) => ordersEqual(order, finalizedOrder));
 
@@ -156,7 +157,6 @@ export function LabOrderForm({
       } else {
         newOrders.push(finalizedOrder);
       }
-
       setOrders(newOrders);
 
       closeWorkspaceWithSavedChanges({
@@ -164,7 +164,7 @@ export function LabOrderForm({
         closeWorkspaceGroup: false,
       });
     },
-    [orders, setOrders, session?.currentProvider?.uuid, closeWorkspaceWithSavedChanges, initialOrder],
+    [orders, setOrders, session?.currentProvider?.uuid, closeWorkspaceWithSavedChanges, initialOrder, visitStartDate],
   );
 
   const cancelOrder = useCallback(() => {

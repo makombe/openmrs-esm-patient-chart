@@ -2,7 +2,11 @@ import React, { type ComponentProps, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@carbon/react';
 import { ArrowLeftIcon, launchWorkspace, useLayoutType, useSession } from '@openmrs/esm-framework';
-import { type DefaultPatientWorkspaceProps, useOrderBasket } from '@openmrs/esm-patient-common-lib';
+import {
+  type DefaultPatientWorkspaceProps,
+  useOrderBasket,
+  useVisitOrOfflineVisit,
+} from '@openmrs/esm-patient-common-lib';
 import { careSettingUuid, prepMedicationOrderPostData } from '../api/api';
 import { ordersEqual } from './drug-search/helpers';
 import type { DrugOrderBasketItem } from '../types';
@@ -21,12 +25,15 @@ export default function AddDrugOrderWorkspace({
   closeWorkspace,
   closeWorkspaceWithSavedChanges,
   promptBeforeClosing,
+  patientUuid,
 }: AddDrugOrderWorkspace) {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const { orders, setOrders } = useOrderBasket<DrugOrderBasketItem>('medications', prepMedicationOrderPostData);
   const [currentOrder, setCurrentOrder] = useState(initialOrder);
   const session = useSession();
+  const { currentVisit } = useVisitOrOfflineVisit(patientUuid);
+  const visitStartDate = currentVisit?.startDatetime;
 
   const cancelDrugOrder = useCallback(() => {
     closeWorkspace({
@@ -51,6 +58,8 @@ export default function AddDrugOrderWorkspace({
     (finalizedOrder: DrugOrderBasketItem) => {
       finalizedOrder.careSetting = careSettingUuid;
       finalizedOrder.orderer = session.currentProvider.uuid;
+      //Setting dateActivated ensures that the order date is accurately captured, which is essential for RDE
+      finalizedOrder.dateActivated = visitStartDate;
       const newOrders = [...orders];
       const existingOrder = orders.find((order) => ordersEqual(order, finalizedOrder));
       if (existingOrder) {
@@ -67,7 +76,7 @@ export default function AddDrugOrderWorkspace({
         onWorkspaceClose: () => launchWorkspace('order-basket'),
       });
     },
-    [orders, setOrders, closeWorkspaceWithSavedChanges, session.currentProvider.uuid],
+    [orders, setOrders, closeWorkspaceWithSavedChanges, session.currentProvider.uuid, visitStartDate],
   );
 
   if (!currentOrder) {
