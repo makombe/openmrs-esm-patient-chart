@@ -34,6 +34,7 @@ export default function AddDrugOrderWorkspace({
   const session = useSession();
   const { currentVisit } = useVisitOrOfflineVisit(patientUuid);
   const visitStartDate = currentVisit?.startDatetime;
+  const visitEndDate = currentVisit?.stopDatetime;
 
   const cancelDrugOrder = useCallback(() => {
     closeWorkspace({
@@ -59,7 +60,9 @@ export default function AddDrugOrderWorkspace({
       finalizedOrder.careSetting = careSettingUuid;
       finalizedOrder.orderer = session.currentProvider.uuid;
       //Setting dateActivated ensures that the order date is accurately captured, which is essential for RDE
-      finalizedOrder.dateActivated = visitStartDate;
+      if (visitEndDate) {
+        finalizedOrder.dateActivated = visitStartDate;
+      }
       const newOrders = [...orders];
       const existingOrder = orders.find((order) => ordersEqual(order, finalizedOrder));
       if (existingOrder) {
@@ -76,7 +79,7 @@ export default function AddDrugOrderWorkspace({
         onWorkspaceClose: () => launchWorkspace('order-basket'),
       });
     },
-    [orders, setOrders, closeWorkspaceWithSavedChanges, session.currentProvider.uuid, visitStartDate],
+    [orders, setOrders, closeWorkspaceWithSavedChanges, session.currentProvider.uuid, visitStartDate, visitEndDate],
   );
 
   if (!currentOrder) {
