@@ -91,12 +91,22 @@ export function LabOrderForm({
                 .refine((value) => !!value, t('orderReasonRequired', 'Order reason is required'))
             : z.string().optional(),
           scheduledDate: z.date({}).nullish(),
+          dateActivated: z.date().nullish(),
         })
         .refine((data) => data.urgency !== 'ON_SCHEDULED_DATE' || Boolean(data.scheduledDate), {
           message: t('scheduledDateRequired', 'Scheduled date is required'),
           path: ['scheduledDate'],
-        }),
-    [orderReasonRequired, t],
+        })
+        .refine(
+          (data) => {
+            return !visitEndDate || Boolean(data.dateActivated);
+          },
+          {
+            message: t('orderDateRequired', 'Order date is required'),
+            path: ['dateActivated'],
+          },
+        ),
+    [orderReasonRequired, t, visitEndDate],
   );
 
   const {
@@ -138,10 +148,6 @@ export function LabOrderForm({
         ...data,
       };
       finalizedOrder.orderer = session.currentProvider.uuid;
-      //Setting dateActivated ensures that the order date is accurately captured, which is essential for RDE
-      if (visitEndDate) {
-        finalizedOrder.dateActivated = visitStartDate;
-      }
       const newOrders = [...orders];
       const existingOrder = orders.find((order) => ordersEqual(order, finalizedOrder));
 
@@ -161,15 +167,7 @@ export function LabOrderForm({
         closeWorkspaceGroup: false,
       });
     },
-    [
-      orders,
-      setOrders,
-      session?.currentProvider?.uuid,
-      closeWorkspaceWithSavedChanges,
-      initialOrder,
-      visitStartDate,
-      visitEndDate,
-    ],
+    [orders, setOrders, session?.currentProvider?.uuid, closeWorkspaceWithSavedChanges, initialOrder],
   );
 
   const cancelOrder = useCallback(() => {
@@ -214,6 +212,30 @@ export function LabOrderForm({
             </InputWrapper>
           </Column>
         </Grid>
+        {visitEndDate && (
+          <Grid className={styles.gridRow}>
+            <Column lg={8} md={8} sm={4}>
+              <InputWrapper>
+                <Controller
+                  name="dateActivated"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <OpenmrsDatePicker
+                      labelText={t('orderDate', 'Order date')}
+                      id="dateActivated"
+                      {...field}
+                      invalid={Boolean(fieldState?.error?.message)}
+                      invalidText={fieldState?.error?.message}
+                      minDate={visitStartDate}
+                      maxDate={visitEndDate}
+                      size={responsiveSize}
+                    />
+                  )}
+                />
+              </InputWrapper>
+            </Column>
+          </Grid>
+        )}
         {config.showReferenceNumberField ? (
           <Grid className={styles.gridRow}>
             <Column lg={16} md={8} sm={4}>
