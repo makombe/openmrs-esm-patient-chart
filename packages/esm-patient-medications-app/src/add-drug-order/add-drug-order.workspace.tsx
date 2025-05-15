@@ -33,9 +33,6 @@ export default function AddDrugOrderWorkspace({
   const { orders, setOrders } = useOrderBasket<DrugOrderBasketItem>('medications', prepMedicationOrderPostData);
   const [currentOrder, setCurrentOrder] = useState(initialOrder);
   const session = useSession();
-  const { currentVisit } = useVisitOrOfflineVisit(patientUuid);
-  const visitStartDate = currentVisit?.startDatetime;
-  const visitEndDate = currentVisit?.stopDatetime;
 
   const cancelDrugOrder = useCallback(() => {
     closeWorkspace({
@@ -60,10 +57,7 @@ export default function AddDrugOrderWorkspace({
     (finalizedOrder: DrugOrderBasketItem) => {
       finalizedOrder.careSetting = careSettingUuid;
       finalizedOrder.orderer = session.currentProvider.uuid;
-      //Setting dateActivated ensures that the order date is accurately captured, which is essential for RDE
-      if (visitEndDate) {
-        finalizedOrder.dateActivated = visitStartDate;
-      }
+
       const newOrders = [...orders];
       const existingOrder = orders.find((order) => ordersEqual(order, finalizedOrder));
       if (existingOrder) {
@@ -80,7 +74,7 @@ export default function AddDrugOrderWorkspace({
         onWorkspaceClose: () => launchPatientWorkspace('order-basket'),
       });
     },
-    [orders, setOrders, closeWorkspaceWithSavedChanges, session.currentProvider.uuid, visitStartDate, visitEndDate],
+    [orders, setOrders, closeWorkspaceWithSavedChanges, session.currentProvider.uuid],
   );
 
   if (!currentOrder) {
@@ -106,6 +100,7 @@ export default function AddDrugOrderWorkspace({
     return (
       <DrugOrderForm
         initialOrderBasketItem={currentOrder}
+        patientUuid={patientUuid}
         onSave={saveDrugOrder}
         onCancel={cancelDrugOrder}
         promptBeforeClosing={promptBeforeClosing}

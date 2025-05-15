@@ -35,7 +35,7 @@ import {
 } from '@openmrs/esm-framework';
 import { type Control, Controller, useController, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { date, z } from 'zod';
 import { useOrderConfig } from '../api/order-config';
 import { type ConfigObject } from '../config-schema';
 import type {
@@ -49,10 +49,11 @@ import type {
 } from '../types';
 import { useRequireOutpatientQuantity } from '../api';
 import styles from './drug-order-form.scss';
-import { usePatientChartStore } from '@openmrs/esm-patient-common-lib';
+import { usePatientChartStore, useVisitOrOfflineVisit } from '@openmrs/esm-patient-common-lib';
 
 export interface DrugOrderFormProps {
   initialOrderBasketItem: DrugOrderBasketItem;
+  patientUuid: string;
   onSave: (finalizedOrder: DrugOrderBasketItem) => void;
   onCancel: () => void;
   promptBeforeClosing: (testFcn: () => boolean) => void;
@@ -100,6 +101,7 @@ function useCreateMedicationOrderFormSchema() {
           })
         : z.string().nullish(),
       startDate: z.date(),
+      dateActivated: z.date().nullish(),
       frequency: z.object(
         { ...comboSchema },
         {
@@ -224,11 +226,20 @@ function InputWrapper({ children }) {
   );
 }
 
-export function DrugOrderForm({ initialOrderBasketItem, onSave, onCancel, promptBeforeClosing }: DrugOrderFormProps) {
+export function DrugOrderForm({
+  initialOrderBasketItem,
+  patientUuid,
+  onSave,
+  onCancel,
+  promptBeforeClosing,
+}: DrugOrderFormProps) {
   const { t } = useTranslation();
   const config = useConfig<ConfigObject>();
   const isTablet = useLayoutType() === 'tablet';
   const { orderConfigObject, error: errorFetchingOrderConfig } = useOrderConfig();
+  const { currentVisit } = useVisitOrOfflineVisit(patientUuid);
+  const visitStartDate = currentVisit?.startDatetime;
+  const visitEndDate = currentVisit?.stopDatetime;
 
   const defaultStartDate = useMemo(() => {
     if (typeof initialOrderBasketItem?.startDate === 'string') parseDate(initialOrderBasketItem?.startDate);
@@ -265,6 +276,7 @@ export function DrugOrderForm({ initialOrderBasketItem, onSave, onCancel, prompt
       indication: initialOrderBasketItem?.indication,
       frequency: initialOrderBasketItem?.frequency,
       startDate: defaultStartDate,
+      dateActivated: initialOrderBasketItem?.dateActivated,
     },
   });
 
@@ -304,6 +316,7 @@ export function DrugOrderForm({ initialOrderBasketItem, onSave, onCancel, prompt
       indication: data.indication,
       frequency: data.frequency,
       startDate: data.startDate,
+      dateActivated: data.dateActivated,
     };
     onSave(newBasketItems as DrugOrderBasketItem);
   };
@@ -442,6 +455,31 @@ export function DrugOrderForm({ initialOrderBasketItem, onSave, onCancel, prompt
             />
           </div>
           <section className={styles.formSection}>
+            {visitEndDate && (
+              <Grid className={styles.gridRow}>
+                <Column lg={16} md={4} sm={4}>
+                  <div className={styles.fullWidthDatePickerContainer}>
+                    <InputWrapper>
+                      <Controller
+                        name="dateActivated"
+                        control={control}
+                        render={({ field, fieldState }) => (
+                          <OpenmrsDatePicker
+                            labelText={t('orderDate', 'Order date')}
+                            id="dateActivated"
+                            {...field}
+                            invalid={Boolean(fieldState?.error?.message)}
+                            invalidText={fieldState?.error?.message}
+                            minDate={visitStartDate}
+                            maxDate={visitEndDate}
+                          />
+                        )}
+                      />
+                    </InputWrapper>
+                  </div>
+                </Column>
+              </Grid>
+            )}
             <Grid className={styles.gridRow}>
               <Column lg={12} md={6} sm={4}>
                 <h3 className={styles.sectionHeader}>{t('dosageInstructions', '1. Dosage instructions')}</h3>
