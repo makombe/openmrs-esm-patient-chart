@@ -50,6 +50,8 @@
   "orderActionNew": "New",
   "orderActionRenew": "Renew",
   "orderActionRevise": "Modify",
+  "orderDate": "Order date",
+  "orderDateRequired": "Order date is required",
   "ordered": "Ordered",
   "orderReason": "Order reason",
   "orderReasonRequired": "Order reason is required",

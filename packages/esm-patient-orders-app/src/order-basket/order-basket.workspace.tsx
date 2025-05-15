@@ -66,49 +66,30 @@ const OrderBasket: React.FC<DefaultPatientWorkspaceProps> = ({
   const handleSave = useCallback(async () => {
     const abortController = new AbortController();
     setCreatingEncounterError('');
-    let orderEncounterUuid = encounterUuid;
+    // let orderEncounterUuid = encounterUuid;
     setIsSavingOrders(true);
     // If there's no encounter present, create an encounter along with the orders.
-    if (!orderEncounterUuid) {
-      try {
-        await postOrdersOnNewEncounter(
-          patientUuid,
-          config?.orderEncounterType,
-          visitRequired ? currentVisit : null,
-          session?.sessionLocation?.uuid,
-          abortController,
-        );
-        mutateEncounterUuid();
-        // Only revalidate current visit since orders create new encounters
-        mutateCurrentVisit();
-        invalidateVisitAndEncounterData(mutate, patientUuid);
-        clearOrders();
-        await mutateOrders();
-
-        closeWorkspaceWithSavedChanges();
-        showOrderSuccessToast(t, orders);
-      } catch (e) {
-        console.error(e);
-        setCreatingEncounterError(
-          e.responseBody?.error?.message ||
-            t('tryReopeningTheWorkspaceAgain', 'Please try launching the workspace again'),
-        );
-      }
-    } else {
-      const erroredItems = await postOrders(patientUuid, orderEncounterUuid, abortController);
-      clearOrders({ exceptThoseMatching: (item) => erroredItems.map((e) => e.display).includes(item.display) });
-      // Only revalidate current visit since orders create new encounters
-      mutateCurrentVisit();
+    try {
+      await postOrdersOnNewEncounter(
+        patientUuid,
+        config?.orderEncounterType,
+        visitRequired ? currentVisit : null,
+        session?.sessionLocation?.uuid,
+        abortController,
+      );
+      mutateEncounterUuid();
+      clearOrders();
       await mutateOrders();
-      invalidateVisitAndEncounterData(mutate, patientUuid);
-
-      if (erroredItems.length == 0) {
-        closeWorkspaceWithSavedChanges();
-        showOrderSuccessToast(t, orders);
-      } else {
-        setOrdersWithErrors(erroredItems);
-      }
+      closeWorkspaceWithSavedChanges();
+      showOrderSuccessToast(t, orders);
+    } catch (e) {
+      console.error(e);
+      setCreatingEncounterError(
+        e.responseBody?.error?.message ||
+          t('tryReopeningTheWorkspaceAgain', 'Please try launching the workspace again'),
+      );
     }
+
     setIsSavingOrders(false);
     return () => abortController.abort();
   }, [
@@ -117,15 +98,12 @@ const OrderBasket: React.FC<DefaultPatientWorkspaceProps> = ({
     clearOrders,
     closeWorkspaceWithSavedChanges,
     config,
-    encounterUuid,
     mutateEncounterUuid,
     mutateOrders,
-    mutateCurrentVisit,
     orders,
     patientUuid,
     session,
     t,
-    mutate,
   ]);
 
   const handleCancel = useCallback(() => {

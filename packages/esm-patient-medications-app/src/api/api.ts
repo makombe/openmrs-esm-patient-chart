@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import useSWRImmutable from 'swr/immutable';
-import { openmrsFetch, restBaseUrl, useConfig, type FetchResponse } from '@openmrs/esm-framework';
+import { openmrsFetch, restBaseUrl, toOmrsIsoString, useConfig, type FetchResponse } from '@openmrs/esm-framework';
 import type { DrugOrderPost, PatientOrderFetchResponse, Order } from '@openmrs/esm-patient-common-lib';
 import { type ConfigObject } from '../config-schema';
 import { type DrugOrderBasketItem } from '../types';
@@ -134,7 +134,7 @@ export function prepMedicationOrderPostData(
       careSetting: order.careSetting,
       orderer: order.orderer,
       encounter: encounterUuid,
-      dateActivated: order.dateActivated,
+      dateActivated: order.dateActivated ? toOmrsIsoString(order.dateActivated) : null,
       drug: order.drug.uuid,
       dose: order.dosage,
       doseUnits: order.unit?.valueCoded,
@@ -163,7 +163,7 @@ export function prepMedicationOrderPostData(
       careSetting: order.careSetting,
       orderer: order.orderer,
       encounter: encounterUuid,
-      dateActivated: order.dateActivated,
+      dateActivated: order.dateActivated ? toOmrsIsoString(order.dateActivated) : null,
       drug: order.drug.uuid,
       dose: order.dosage,
       doseUnits: order.unit?.valueCoded,
