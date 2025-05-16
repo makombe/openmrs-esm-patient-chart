@@ -153,6 +153,14 @@ export function LabOrderForm({
         ...initialOrder,
         ...data,
       };
+      if (visitStartDate && finalizedOrder.dateActivated) {
+        const visitStart = new Date(visitStartDate).getTime();
+        const selectedDate = new Date(finalizedOrder.dateActivated).getTime();
+        if (selectedDate <= visitStart) {
+          // If same date or earlier time, push it slightly ahead (e.g., +1 second)
+          finalizedOrder.dateActivated = new Date(visitStart + 3000); // 3 second later
+        }
+      }
       finalizedOrder.orderer = session.currentProvider.uuid;
       const newOrders = [...orders];
       const existingOrder = orders.find((order) => ordersEqual(order, finalizedOrder));
@@ -173,7 +181,7 @@ export function LabOrderForm({
         closeWorkspaceGroup: false,
       });
     },
-    [orders, setOrders, session?.currentProvider?.uuid, closeWorkspaceWithSavedChanges, initialOrder],
+    [orders, setOrders, session?.currentProvider?.uuid, closeWorkspaceWithSavedChanges, initialOrder, visitStartDate],
   );
 
   const cancelOrder = useCallback(() => {

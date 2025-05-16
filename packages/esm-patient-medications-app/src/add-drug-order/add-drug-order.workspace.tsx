@@ -32,6 +32,8 @@ export default function AddDrugOrderWorkspace({
   const { orders, setOrders } = useOrderBasket<DrugOrderBasketItem>('medications', prepMedicationOrderPostData);
   const [currentOrder, setCurrentOrder] = useState(initialOrder);
   const session = useSession();
+  const { currentVisit } = useVisitOrOfflineVisit(patientUuid);
+  const visitStartDate = currentVisit?.startDatetime;
 
   const cancelDrugOrder = useCallback(() => {
     closeWorkspace({
@@ -56,6 +58,14 @@ export default function AddDrugOrderWorkspace({
     (finalizedOrder: DrugOrderBasketItem) => {
       finalizedOrder.careSetting = careSettingUuid;
       finalizedOrder.orderer = session.currentProvider.uuid;
+      if (visitStartDate && finalizedOrder.dateActivated) {
+        const visitStart = new Date(visitStartDate).getTime();
+        const selectedDate = new Date(finalizedOrder.dateActivated).getTime();
+        if (selectedDate <= visitStart) {
+          // If same date or earlier time, push it slightly ahead (e.g., +1 second)
+          finalizedOrder.dateActivated = new Date(visitStart + 3000); // 3 second later
+        }
+      }
 
       const newOrders = [...orders];
       const existingOrder = orders.find((order) => ordersEqual(order, finalizedOrder));
@@ -73,7 +83,7 @@ export default function AddDrugOrderWorkspace({
         onWorkspaceClose: () => launchWorkspace('order-basket'),
       });
     },
-    [orders, setOrders, closeWorkspaceWithSavedChanges, session.currentProvider.uuid],
+    [orders, setOrders, closeWorkspaceWithSavedChanges, session.currentProvider.uuid, visitStartDate],
   );
 
   if (!currentOrder) {
